@@ -16,14 +16,19 @@ class DocumentService(DocumentUseCase):
     def __init__(self, document_repository: DocumentRepositoryPort):
         self._repository = document_repository
 
-    def create_document(self, project: str, service: str, domain: str, summary: str, properties: list, policies: list, created_at: datetime, updated_at: datetime) -> DomainDocument:
+    def create_or_update_document(self, project: str, service: str, domain: str, summary: str, properties: list, policies: list) -> DomainDocument:
         """
-        Creates a new domain document.
+        Creates a new document or a new version of an existing one.
         """
-        # Here you could add validation logic, e.g., check for duplicates
+        latest_version = self._repository.find_latest_by_logical_key(
+            project=project,
+            service=service,
+            domain=domain
+        )
         
-        # For simplicity, creating a new document directly.
-        # In a real scenario, you'd map the incoming data to the DomainDocument model.
+        new_version_number = 1
+        if latest_version:
+            new_version_number = latest_version.version + 1
         
         new_document = DomainDocument(
             identifier=uuid.uuid4(),
@@ -31,12 +36,12 @@ class DocumentService(DocumentUseCase):
             service=service,
             domain=domain,
             summary=summary,
-            version=1, # Initial version
+            version=new_version_number,
             properties=[DomainProperty(**p) for p in properties],
             policies=[DomainPolicy(**p) for p in policies],
             dependencies=[],
-            created_at=created_at,
-            updated_at=updated_at
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc)
         )
         
         return self._repository.save(new_document)
@@ -62,3 +67,21 @@ class DocumentService(DocumentUseCase):
         # Returning the model as a dict for now.
         # The actual view logic would be handled by the adapter or a specific query object.
         return document.model_dump()
+
+    def find_all_latest_by_project(self, project: str) -> List[DomainDocument]:
+        """
+        Retrieves the latest version of all domain documents for a given project.
+        """
+        return self._repository.find_all_latest_by_project(project)
+
+    def get_all_unique_project_names(self) -> List[str]:
+        """
+        Retrieves a list of all unique project names.
+        """
+        return self._repository.get_all_unique_project_names()
+
+    def get_all_versions_of_document(self, project: str, service: str, domain: str) -> List[DomainDocument]:
+        """
+        Retrieves all versions of a single document.
+        """
+        return self._repository.find_all_versions_by_logical_key(project, service, domain)

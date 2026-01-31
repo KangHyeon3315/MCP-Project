@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Project: {{ project_name }}{% endblock %}
+
+{% block content %}
+    <h1>Project: <strong>{{ project_name }}</strong></h1>
+    <p class="lead">Domain knowledge and project conventions for {{ project_name }}.</p>
+
+    <div class="row mt-5">
+        <div class="col-md-6">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2>Domain Documents</h2>
+                <form method="get" class="d-flex align-items-center">
+                    <select name="service_filter" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">Filter by Service</option>
+                        {% for service in available_services %}
+                            <option value="{{ service }}" {% if service == current_service_filter %}selected{% endif %}>{{ service }}</option>
+                        {% endfor %}
+                    </select>
+                    <a href="/ui/projects/{{ project_name }}" class="btn btn-sm btn-outline-secondary ms-2">Clear</a>
+                </form>
+            </div>
+            
+            <p>What we build.</p>
+            {% if domains %}
+                <ul class="list-group">
+                    {% for domain in domains %}
+                        <li class="list-group-item">
+                            <a href="/ui/domains/{{ domain.project }}/{{ domain.service }}/{{ domain.domain }}">{{ domain.project }} / {{ domain.service }} / <strong>{{ domain.domain }}</strong></a>
+                            <p class="mb-0 text-muted">{{ domain.summary }}</p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No domain documents found for the selected filter.</p>
+            {% endif %}
+        </div>
+        <div class="col-md-6">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2>Project Conventions</h2>
+                <form method="get" class="d-flex align-items-center">
+                    <select name="category_filter" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">Filter by Category</option>
+                        {% for category in available_categories %}
+                            <option value="{{ category }}" {% if category == current_category_filter %}selected{% endif %}>{{ category }}</option>
+                        {% endfor %}
+                    </select>
+                    <a href="/ui/projects/{{ project_name }}" class="btn btn-sm btn-outline-secondary ms-2">Clear</a>
+                </form>
+            </div>
+
+            <p>How we build.</p>
+            {% if conventions %}
+                <div class="accordion" id="conventionAccordion">
+                    {% for convention in conventions %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ loop.index }}">
+                                    <a href="/ui/conventions/{{ convention.project }}/{{ convention.category }}/{{ convention.title }}" class="text-decoration-none">
+                                        [{{ convention.category }}] {{ convention.title }}
+                                    </a>
+                                </button>
+                            </h2>
+                            <div id="collapse-{{ loop.index }}" class="accordion-collapse collapse" data-bs-parent="#conventionAccordion">
+                                <div class="accordion-body">
+                                    <p>{{ convention.content }}</p>
+                                    <hr>
+                                    <p><strong>Good:</strong> <pre><code>{{ convention.example_correct }}</code></pre></p>
+                                    <p><strong>Bad:</strong> <pre><code>{{ convention.example_incorrect }}</code></pre></p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>No project conventions found for the selected filter.</p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

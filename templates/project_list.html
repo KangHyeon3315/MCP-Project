@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Projects - DCMA{% endblock %}
+
+{% block content %}
+    <h1>Projects</h1>
+    <p class="lead">Select a project to view its domain knowledge and conventions.</p>
+
+    <div class="list-group mt-4">
+        {% for project in projects %}
+            <a href="/ui/projects/{{ project }}" class="list-group-item list-group-item-action">
+                {{ project }}
+            </a>
+        {% else %}
+            <div class="list-group-item">No projects found.</div>
+        {% endfor %}
+    </div>
+{% endblock %}

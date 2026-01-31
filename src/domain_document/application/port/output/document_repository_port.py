@@ -32,6 +32,34 @@ class DocumentRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def find_latest_by_logical_key(self, project: str, service: str, domain: str) -> Optional[DomainDocument]:
+        """
+        Finds the latest version of a single domain document by its logical key.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_all_versions_by_logical_key(self, project: str, service: str, domain: str) -> List[DomainDocument]:
+        """
+        Finds all versions of a single domain document by its logical key.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_all_latest_by_project(self, project: str) -> List[DomainDocument]:
+        """
+        Finds only the latest version of each domain document for a given project.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_all_unique_project_names(self) -> List[str]:
+        """
+        Retrieves a list of all unique project names.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
     def find_all_by_project(self, project: str) -> List[DomainDocument]:
         """
         Finds all domain documents for a given project.

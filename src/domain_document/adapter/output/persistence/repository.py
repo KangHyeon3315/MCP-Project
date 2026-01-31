@@ -1,12 +1,14 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import func
+from sqlalchemy.sql.expression import over # Correct import for over()
 from typing import Optional, List
 import uuid
 from datetime import datetime, timezone # Import datetime and timezone
 
 from src.domain_document.application.port.output.document_repository_port import DocumentRepositoryPort
-from src.domain_document.domain.model.document import DomainDocument, DomainProperty, DomainPolicy, DomainRelationship
+from src.domain_document.domain.model.document import DomainDocument, DomainProperty, DomainPolicy
 from src.domain_document.adapter.output.persistence.entity import (
-    DomainDocumentEntity, DomainPropertyEntity, DomainPolicyEntity, DomainEnumValueEntity, DomainRelationshipEntity
+    DomainDocumentEntity, DomainPropertyEntity, DomainPolicyEntity
 )
 
 # This is a simplified mapper. In a real application, you might use a library like `automapper`.
@@ -60,86 +62,40 @@ class DocumentRepository(DocumentRepositoryPort):
         self._session = session
 
     def save(self, document: DomainDocument) -> DomainDocument:
-        entity = self._session.get(DomainDocumentEntity, document.identifier)
-        if entity:
-            # Update existing entity
-            entity.project = document.project
-            entity.service = document.service
-            entity.domain = document.domain
-            entity.summary = document.summary
-            entity.version = document.version
-            # Created_at should not be updated. Updated_at handled by DB.
-
-            # Handle nested properties and policies
-            # This is a simplified approach, a more robust solution would involve
-            # comparing existing properties/policies and updating/deleting/adding as needed.
-            # For this example, we'll clear and re-add.
-            # Clear existing children
-            entity.properties.clear()
-            entity.policies.clear()
-
-            for idx, prop in enumerate(document.properties):
-                prop_entity = DomainPropertyEntity(
-                    identifier=uuid.uuid4(), # New identifier for sub-entity
-                    domain_identifier=entity.identifier,
-                    name=prop.name,
-                    description=prop.description,
-                    type=prop.type,
-                    is_required=prop.is_required,
-                    is_immutable=prop.is_immutable,
-                    display_order=idx, # Explicitly set display_order
-                    created_at=datetime.now(timezone.utc), # Explicitly set
-                    updated_at=datetime.now(timezone.utc)  # Explicitly set
-                )
-                # handle enum values if they exist in prop
-                entity.properties.append(prop_entity)
-
-            for policy in document.policies:
-                policy_entity = DomainPolicyEntity(
-                    identifier=uuid.uuid4(), # New identifier for sub-entity
-                    domain_identifier=entity.identifier,
-                    category=policy.category,
-                    subject=policy.subject,
-                    content=policy.content,
-                    created_at=datetime.now(timezone.utc), # Explicitly set
-                    updated_at=datetime.now(timezone.utc)  # Explicitly set
-                )
-                entity.policies.append(policy_entity)
+        """
+        Saves a new version of a domain document. This is always an insert.
+        """
+        entity = to_entity(document)
             
-        else:
-            # Create new entity
-            entity = to_entity(document)
-            
-            # Add nested properties and policies for a new document
-            for idx, prop in enumerate(document.properties):
-                prop_entity = DomainPropertyEntity(
-                    identifier=uuid.uuid4(),
-                    domain_identifier=entity.identifier,
-                    name=prop.name,
-                    description=prop.description,
-                    type=prop.type,
-                    is_required=prop.is_required,
-                    is_immutable=prop.is_immutable,
-                    display_order=idx, # Explicitly set display_order
-                    created_at=datetime.now(timezone.utc), # Explicitly set
-                    updated_at=datetime.now(timezone.utc)  # Explicitly set
-                )
-                entity.properties.append(prop_entity)
+        # Add nested properties and policies for a new document
+        for idx, prop in enumerate(document.properties):
+            prop_entity = DomainPropertyEntity(
+                identifier=uuid.uuid4(),
+                domain_identifier=entity.identifier,
+                name=prop.name,
+                description=prop.description,
+                type=prop.type,
+                is_required=prop.is_required,
+                is_immutable=prop.is_immutable,
+                display_order=idx,
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc)
+            )
+            entity.properties.append(prop_entity)
 
-            for policy in document.policies:
-                policy_entity = DomainPolicyEntity(
-                    identifier=uuid.uuid4(),
-                    domain_identifier=entity.identifier,
-                    category=policy.category,
-                    subject=policy.subject,
-                    content=policy.content,
-                    created_at=datetime.now(timezone.utc), # Explicitly set
-                    updated_at=datetime.now(timezone.utc)  # Explicitly set
-                )
-                entity.policies.append(policy_entity)
-            
-            self._session.add(entity)
+        for policy in document.policies:
+            policy_entity = DomainPolicyEntity(
+                identifier=uuid.uuid4(),
+                domain_identifier=entity.identifier,
+                category=policy.category,
+                subject=policy.subject,
+                content=policy.content,
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc)
+            )
+            entity.policies.append(policy_entity)
         
+        self._session.add(entity)
         self._session.commit()
         self._session.refresh(entity)
         return to_domain(entity)
@@ -156,6 +112,48 @@ class DocumentRepository(DocumentRepositoryPort):
             version=version
         ).first()
         return to_domain(entity) if entity else None
+
+    def find_latest_by_logical_key(self, project: str, service: str, domain: str) -> Optional[DomainDocument]:
+        entity = self._session.query(DomainDocumentEntity).filter_by(
+            project=project,
+            service=service,
+            domain=domain
+        ).order_by(DomainDocumentEntity.version.desc()).first()
+        return to_domain(entity) if entity else None
+
+    def find_all_versions_by_logical_key(self, project: str, service: str, domain: str) -> List[DomainDocument]:
+        entities = self._session.query(DomainDocumentEntity).filter_by(
+            project=project,
+            service=service,
+            domain=domain
+        ).order_by(DomainDocumentEntity.version.desc()).all()
+        return [to_domain(entity) for entity in entities]
+
+    def find_all_latest_by_project(self, project: str) -> List[DomainDocument]:
+        """
+        Uses PostgreSQL's DISTINCT ON to efficiently find the latest version of each document.
+        """
+        latest_versions = self._session.query(DomainDocumentEntity).distinct(
+            DomainDocumentEntity.project,
+            DomainDocumentEntity.service,
+            DomainDocumentEntity.domain
+        ).filter(
+            DomainDocumentEntity.project == project
+        ).order_by(
+            DomainDocumentEntity.project,
+            DomainDocumentEntity.service,
+            DomainDocumentEntity.domain,
+            DomainDocumentEntity.version.desc()
+        ).all()
+
+        return [to_domain(entity) for entity in latest_versions]
+
+    def get_all_unique_project_names(self) -> List[str]:
+        """
+        Retrieves a list of all unique project names from domain documents.
+        """
+        project_tuples = self._session.query(DomainDocumentEntity.project).distinct().all()
+        return [project[0] for project in project_tuples]
 
     def find_all_by_project(self, project: str) -> List[DomainDocument]:
         entities = self._session.query(DomainDocumentEntity).filter_by(project=project).all()

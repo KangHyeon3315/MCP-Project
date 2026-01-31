@@ -13,9 +13,9 @@ class DocumentUseCase(ABC):
     """
 
     @abstractmethod
-    def create_document(self, project: str, service: str, domain: str, summary: str, properties: list, policies: list, created_at: datetime, updated_at: datetime) -> DomainDocument:
+    def create_or_update_document(self, project: str, service: str, domain: str, summary: str, properties: list, policies: list) -> DomainDocument:
         """
-        Use case for creating a new domain document.
+        Use case for creating a new document or updating an existing one by creating a new version.
         """
         raise NotImplementedError
 
@@ -30,5 +30,26 @@ class DocumentUseCase(ABC):
     def get_document_context(self, identifier: uuid.UUID) -> Optional[dict]:
         """
         Use case for retrieving the full context of a domain document.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_all_latest_by_project(self, project: str) -> List[DomainDocument]:
+        """
+        Finds the latest version of all domain documents for a given project.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_all_unique_project_names(self) -> List[str]:
+        """
+        Retrieves a list of all unique project names.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_all_versions_of_document(self, project: str, service: str, domain: str) -> List[DomainDocument]:
+        """
+        Use case for retrieving all versions of a single document.
         """
         raise NotImplementedError
