@@ -1,0 +1,13 @@
+# Web Framework
+fastapi
+uvicorn
+
+# Database
+sqlalchemy
+psycopg2-binary
+
+# Pydantic for domain models
+pydantic
+
+# Dependency Injection
+dependency-injector
