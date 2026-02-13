@@ -11,7 +11,7 @@ RUN apt-get update && \
 RUN pip install --no-cache-dir poetry
 
 # Copy dependency files first for layer caching
-COPY pyproject.toml poetry.lock ./
+COPY pyproject.toml poetry.lock* ./
 
 # Install dependencies (no dev, no virtualenv inside container)
 RUN poetry config virtualenvs.create false && \
