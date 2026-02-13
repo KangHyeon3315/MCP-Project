@@ -1,0 +1,12 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      - UVICORN_PORT=8080
+    extra_hosts:
+      - "data-node:host-gateway"
+    restart: unless-stopped

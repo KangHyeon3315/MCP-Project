@@ -1,5 +1,5 @@
 import uuid
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
 
@@ -18,6 +18,6 @@ class ProjectConvention(BaseModel):
     example_incorrect: Optional[str] = Field(None, description="잘못된 예시")
     created_at: datetime
     updated_at: datetime
+    deleted_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

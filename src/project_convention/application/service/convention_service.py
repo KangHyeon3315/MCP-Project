@@ -62,9 +62,14 @@ class ConventionService(ConventionUseCase):
         """
         return self._repository.find_all_versions_by_logical_key(project, category, title)
 
+    def soft_delete_convention_by_logical_key(self, project: str, category: str, title: str) -> int:
+        """
+        Soft-deletes all versions of a project convention.
+        """
+        return self._repository.soft_delete_all_versions_by_logical_key(project, category, title)
+
     def get_conventions_by_category(self, project: str, category: str) -> List[ProjectConvention]:
         """
-        Retrieves all conventions for a specific project and category.
-        NOTE: This still fetches all versions. For versioning, this should be updated.
+        Retrieves the latest version of conventions for a specific project and category.
         """
-        return self._repository.find_by_project_and_category(project, category)
+        return self._repository.find_latest_by_project_and_category(project, category)

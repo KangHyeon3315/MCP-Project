@@ -20,5 +20,6 @@ class ProjectConventionEntity(Base):
     example_incorrect = Column(TEXT)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
     updated_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
+    deleted_at = Column(TIMESTAMP(timezone=True), nullable=True) # For soft-delete
     
     __table_args__ = (UniqueConstraint('project', 'category', 'title', 'version', name='uq_project_convention'),)

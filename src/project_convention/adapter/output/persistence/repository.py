@@ -43,27 +43,67 @@ class ConventionRepository(ConventionRepositoryPort):
 
     def find_by_identifier(self, identifier: uuid.UUID) -> Optional[ProjectConvention]:
         entity = self._session.get(ProjectConventionEntity, identifier)
-        return to_domain(entity) if entity else None
+        if entity and entity.deleted_at is None:
+            return to_domain(entity)
+        return None
 
     def find_by_project(self, project: str) -> List[ProjectConvention]:
-        entities = self._session.query(ProjectConventionEntity).filter_by(project=project).all()
+        entities = self._session.query(ProjectConventionEntity).filter(
+            ProjectConventionEntity.project == project,
+            ProjectConventionEntity.deleted_at.is_(None)
+        ).all()
         return [to_domain(entity) for entity in entities]
 
     def find_by_project_and_category(self, project: str, category: str) -> List[ProjectConvention]:
-        entities = self._session.query(ProjectConventionEntity).filter_by(
-            project=project,
-            category=category
+        entities = self._session.query(ProjectConventionEntity).filter(
+            ProjectConventionEntity.project == project,
+            ProjectConventionEntity.category == category,
+            ProjectConventionEntity.deleted_at.is_(None)
         ).all()
+        return [to_domain(entity) for entity in entities]
+
+    def find_latest_by_project_and_category(self, project: str, category: str) -> List[ProjectConvention]:
+        """
+        Uses PostgreSQL's DISTINCT ON to efficiently find the latest version of each convention
+        for a given project and category.
+        """
+        # Subquery to find latest versions.
+        latest_identifiers_query = self._session.query(ProjectConventionEntity.identifier)\
+            .distinct(
+                ProjectConventionEntity.project,
+                ProjectConventionEntity.category,
+                ProjectConventionEntity.title
+            ).filter(
+                ProjectConventionEntity.project == project,
+                ProjectConventionEntity.category == category,
+                ProjectConventionEntity.deleted_at.is_(None)
+            ).order_by(
+                ProjectConventionEntity.project,
+                ProjectConventionEntity.category,
+                ProjectConventionEntity.title,
+                ProjectConventionEntity.version.desc()
+            ).subquery()
+        
+        entities = self._session.query(ProjectConventionEntity)\
+            .filter(ProjectConventionEntity.identifier.in_(latest_identifiers_query))\
+            .order_by(
+                ProjectConventionEntity.project,
+                ProjectConventionEntity.category,
+                ProjectConventionEntity.title,
+                ProjectConventionEntity.version.desc()
+            ).all()
+
         return [to_domain(entity) for entity in entities]
 
     def find_latest_by_logical_key(self, project: str, category: str, title: str) -> Optional[ProjectConvention]:
         """
         Finds the latest version of a single convention by its logical key.
         """
-        entity = self._session.query(ProjectConventionEntity).filter_by(
-            project=project,
-            category=category,
-            title=title
+        entity = self._session.query(ProjectConventionEntity).filter(
+            ProjectConventionEntity.project == project,
+            ProjectConventionEntity.category == category,
+            ProjectConventionEntity.title == title,
+            ProjectConventionEntity.deleted_at.is_(None)
         ).order_by(ProjectConventionEntity.version.desc()).first()
         
         return to_domain(entity) if entity else None
@@ -72,10 +112,11 @@ class ConventionRepository(ConventionRepositoryPort):
         """
         Finds all versions of a single convention by its logical key, ordered by version descending.
         """
-        entities = self._session.query(ProjectConventionEntity).filter_by(
-            project=project,
-            category=category,
-            title=title
+        entities = self._session.query(ProjectConventionEntity).filter(
+            ProjectConventionEntity.project == project,
+            ProjectConventionEntity.category == category,
+            ProjectConventionEntity.title == title,
+            ProjectConventionEntity.deleted_at.is_(None)
         ).order_by(ProjectConventionEntity.version.desc()).all()
         return [to_domain(entity) for entity in entities]
 
@@ -83,32 +124,58 @@ class ConventionRepository(ConventionRepositoryPort):
         """
         Uses PostgreSQL's DISTINCT ON to efficiently find the latest version of each convention.
         """
-        latest_versions = self._session.query(ProjectConventionEntity).distinct(
-            ProjectConventionEntity.project,
-            ProjectConventionEntity.category,
-            ProjectConventionEntity.title
-        ).filter(
-            ProjectConventionEntity.project == project
+        # We need to filter out deleted items before applying DISTINCT ON
+        subquery = self._session.query(ProjectConventionEntity).filter(
+            ProjectConventionEntity.project == project,
+            ProjectConventionEntity.deleted_at.is_(None)
+        ).subquery()
+
+        latest_versions = self._session.query(subquery).distinct(
+            subquery.c.project,
+            subquery.c.category,
+            subquery.c.title
         ).order_by(
-            ProjectConventionEntity.project,
-            ProjectConventionEntity.category,
-            ProjectConventionEntity.title,
-            ProjectConventionEntity.version.desc()
+            subquery.c.project,
+            subquery.c.category,
+            subquery.c.title,
+            subquery.c.version.desc()
         ).all()
         
-        return [to_domain(entity) for entity in latest_versions]
+        # The result of a subquery query is a KeyedTuple, not the entity directly
+        # A simple to_domain mapping won't work. We need to create the domain model from the tuple.
+        return [ProjectConvention.model_validate(row, from_attributes=True) for row in latest_versions]
 
     def get_all_unique_project_names(self) -> List[str]:
         """
         Retrieves a list of all unique project names from project conventions.
         """
-        project_tuples = self._session.query(ProjectConventionEntity.project).distinct().all()
+        project_tuples = self._session.query(ProjectConventionEntity.project).filter(
+            ProjectConventionEntity.deleted_at.is_(None)
+        ).distinct().all()
         return [project[0] for project in project_tuples]
 
     def delete_by_identifier(self, identifier: uuid.UUID) -> bool:
+        # Hard delete (only use if necessary, prefer soft-delete)
         entity = self._session.get(ProjectConventionEntity, identifier)
         if entity:
             self._session.delete(entity)
             self._session.commit()
             return True
         return False
+
+    def soft_delete_all_versions_by_logical_key(self, project: str, category: str, title: str) -> int:
+        """
+        Soft-deletes all versions of a project convention by setting the deleted_at timestamp.
+        """
+        now = datetime.now(timezone.utc)
+        result = self._session.query(ProjectConventionEntity).filter(
+            ProjectConventionEntity.project == project,
+            ProjectConventionEntity.category == category,
+            ProjectConventionEntity.title == title,
+            ProjectConventionEntity.deleted_at.is_(None) # Only soft-delete non-deleted items
+        ).update(
+            {ProjectConventionEntity.deleted_at: now},
+            synchronize_session=False
+        )
+        self._session.commit()
+        return result

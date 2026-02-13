@@ -73,3 +73,10 @@ class DocumentRepositoryPort(ABC):
         """
         raise NotImplementedError
 
+    @abstractmethod
+    def soft_delete_all_versions_by_logical_key(self, project: str, service: str, domain: str) -> int:
+        """
+        Soft-deletes all versions of a domain document. Returns the number of affected rows.
+        """
+        raise NotImplementedError
+

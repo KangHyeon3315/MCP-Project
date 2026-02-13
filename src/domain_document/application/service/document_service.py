@@ -85,3 +85,9 @@ class DocumentService(DocumentUseCase):
         Retrieves all versions of a single document.
         """
         return self._repository.find_all_versions_by_logical_key(project, service, domain)
+
+    def soft_delete_document_by_logical_key(self, project: str, service: str, domain: str) -> int:
+        """
+        Soft-deletes all versions of a domain document.
+        """
+        return self._repository.soft_delete_all_versions_by_logical_key(project, service, domain)

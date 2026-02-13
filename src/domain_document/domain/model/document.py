@@ -1,5 +1,5 @@
 import uuid
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
 from datetime import datetime
 
@@ -11,8 +11,7 @@ class DomainProperty(BaseModel):
     is_required: bool = Field(..., description="필수 여부")
     is_immutable: bool = Field(..., description="불변 여부")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DomainPolicy(BaseModel):
@@ -20,8 +19,7 @@ class DomainPolicy(BaseModel):
     subject: Optional[str] = Field(None, description="정책 주체 (e.g., 'ADMIN', 'MEMBER')")
     content: str = Field(..., description="정책 상세 내용")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DomainRelationship(BaseModel):
@@ -30,8 +28,7 @@ class DomainRelationship(BaseModel):
     description: str = Field(..., description="관계 설명")
     impact_description: Optional[str] = Field(None, description="영향 분석")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DomainDocument(BaseModel):
@@ -53,7 +50,7 @@ class DomainDocument(BaseModel):
     
     created_at: datetime
     updated_at: datetime
+    deleted_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
         

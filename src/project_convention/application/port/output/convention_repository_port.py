@@ -39,6 +39,13 @@ class ConventionRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def find_latest_by_project_and_category(self, project: str, category: str) -> List[ProjectConvention]:
+        """
+        Finds the latest version of each convention for a given project and category.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
     def find_latest_by_logical_key(self, project: str, category: str, title: str) -> Optional[ProjectConvention]:
         """
         Finds the latest version of a single convention by its logical key.
@@ -70,5 +77,12 @@ class ConventionRepositoryPort(ABC):
     def delete_by_identifier(self, identifier: uuid.UUID) -> bool:
         """
         Deletes a project convention by its unique identifier. Returns True on success.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def soft_delete_all_versions_by_logical_key(self, project: str, category: str, title: str) -> int:
+        """
+        Soft-deletes all versions of a project convention. Returns the number of affected rows.
         """
         raise NotImplementedError

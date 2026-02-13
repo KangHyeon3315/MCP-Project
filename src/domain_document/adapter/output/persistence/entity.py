@@ -18,9 +18,12 @@ class DomainDocumentEntity(Base):
     service = Column(String, nullable=False)
     domain = Column(String, nullable=False)
     summary = Column(String, nullable=False)
-    version = Column(Integer, nullable=False)
+    version = Column(Integer, nullable=False) # 버전 (애플리케이션에서 제어)
+
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
     updated_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
+    deleted_at = Column(TIMESTAMP(timezone=True), nullable=True) # For soft-delete
+
 
     properties = relationship("DomainPropertyEntity", back_populates="domain_document", cascade="all, delete-orphan")
     policies = relationship("DomainPolicyEntity", back_populates="domain_document", cascade="all, delete-orphan")
