@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session, joinedload # Import joinedload
-from sqlalchemy import func
+from sqlalchemy import func, text
 from sqlalchemy.sql.expression import over # Correct import for over()
-from typing import Optional, List
+from typing import Optional, List, Tuple
 import uuid
 from datetime import datetime, timezone # Import datetime and timezone
 
@@ -268,3 +268,88 @@ class DocumentRepository(DocumentRepositoryPort):
         )
         self._session.commit()
         return result
+
+    def update_embedding(self, document_id: str, embedding: List[float]) -> None:
+        """
+        문서의 임베딩 업데이트
+
+        Args:
+            document_id: 문서 식별자
+            embedding: 임베딩 벡터 (384차원)
+        """
+        # Convert list to string format for pgvector
+        embedding_str = f"[{','.join(map(str, embedding))}]"
+
+        self._session.execute(
+            text("""
+                UPDATE domain_document
+                SET embedding = CAST(:embedding_str AS vector),
+                    updated_at = NOW()
+                WHERE identifier = :document_id
+            """),
+            {"document_id": document_id, "embedding_str": embedding_str}
+        )
+        self._session.commit()
+
+    def semantic_search(
+        self,
+        query_embedding: List[float],
+        top_k: int = 10,
+        similarity_threshold: float = 0.3
+    ) -> List[Tuple[DomainDocument, float]]:
+        """
+        벡터 유사도 검색
+
+        Args:
+            query_embedding: 쿼리 임베딩 벡터
+            top_k: 최대 반환 결과 수
+            similarity_threshold: 최소 유사도 임계값 (0.0 ~ 1.0)
+
+        Returns:
+            (DomainDocument, similarity) 튜플 리스트
+        """
+        # Convert list to string format for pgvector
+        query_vector_str = f"[{','.join(map(str, query_embedding))}]"
+
+        # SQL 쿼리로 벡터 검색 수행
+        query = text("""
+            SELECT identifier,
+                   1 - (embedding <=> CAST(:query_vector_str AS vector)) as similarity
+            FROM domain_document
+            WHERE deleted_at IS NULL
+              AND embedding IS NOT NULL
+              AND 1 - (embedding <=> CAST(:query_vector_str AS vector)) > :threshold
+            ORDER BY embedding <=> CAST(:query_vector_str AS vector)
+            LIMIT :top_k
+        """)
+
+        result = self._session.execute(
+            query,
+            {
+                "query_vector_str": query_vector_str,
+                "threshold": similarity_threshold,
+                "top_k": top_k
+            }
+        )
+
+        # 결과를 DomainDocument 객체로 변환
+        results = []
+        for row in result:
+            document_id = row.identifier
+            similarity = row.similarity
+
+            # 문서 조회 (eager loading으로 전체 데이터 로드)
+            entity = self._session.query(DomainDocumentEntity)\
+                .options(
+                    joinedload(DomainDocumentEntity.properties),
+                    joinedload(DomainDocumentEntity.policies),
+                    joinedload(DomainDocumentEntity.source_relationships).joinedload(DomainRelationshipEntity.target_domain)
+                )\
+                .filter(DomainDocumentEntity.identifier == document_id)\
+                .first()
+
+            if entity:
+                document = to_domain(entity)
+                results.append((document, similarity))
+
+        return results

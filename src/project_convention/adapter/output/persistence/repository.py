@@ -1,8 +1,9 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, text
 from sqlalchemy.sql.expression import over # Correct import for over()
-from typing import Optional, List
+from typing import Optional, List, Tuple
 import uuid
+from datetime import datetime, timezone
 
 from src.project_convention.application.port.output.convention_repository_port import ConventionRepositoryPort
 from src.project_convention.domain.model.convention import ProjectConvention
@@ -179,3 +180,81 @@ class ConventionRepository(ConventionRepositoryPort):
         )
         self._session.commit()
         return result
+
+    def update_embedding(self, convention_id: str, embedding: List[float]) -> None:
+        """
+        컨벤션의 임베딩 업데이트
+
+        Args:
+            convention_id: 컨벤션 식별자
+            embedding: 임베딩 벡터 (384차원)
+        """
+        # Convert list to string format for pgvector
+        embedding_str = f"[{','.join(map(str, embedding))}]"
+
+        self._session.execute(
+            text("""
+                UPDATE project_convention
+                SET embedding = CAST(:embedding_str AS vector),
+                    updated_at = NOW()
+                WHERE identifier = :convention_id
+            """),
+            {"convention_id": convention_id, "embedding_str": embedding_str}
+        )
+        self._session.commit()
+
+    def semantic_search(
+        self,
+        query_embedding: List[float],
+        top_k: int = 10,
+        similarity_threshold: float = 0.3
+    ) -> List[Tuple[ProjectConvention, float]]:
+        """
+        벡터 유사도 검색
+
+        Args:
+            query_embedding: 쿼리 임베딩 벡터
+            top_k: 최대 반환 결과 수
+            similarity_threshold: 최소 유사도 임계값 (0.0 ~ 1.0)
+
+        Returns:
+            (ProjectConvention, similarity) 튜플 리스트
+        """
+        # Convert list to string format for pgvector
+        query_vector_str = f"[{','.join(map(str, query_embedding))}]"
+
+        # SQL 쿼리로 벡터 검색 수행
+        query = text("""
+            SELECT identifier,
+                   1 - (embedding <=> CAST(:query_vector_str AS vector)) as similarity
+            FROM project_convention
+            WHERE deleted_at IS NULL
+              AND embedding IS NOT NULL
+              AND 1 - (embedding <=> CAST(:query_vector_str AS vector)) > :threshold
+            ORDER BY embedding <=> CAST(:query_vector_str AS vector)
+            LIMIT :top_k
+        """)
+
+        result = self._session.execute(
+            query,
+            {
+                "query_vector_str": query_vector_str,
+                "threshold": similarity_threshold,
+                "top_k": top_k
+            }
+        )
+
+        # 결과를 ProjectConvention 객체로 변환
+        results = []
+        for row in result:
+            convention_id = row.identifier
+            similarity = row.similarity
+
+            # 컨벤션 조회
+            entity = self._session.get(ProjectConventionEntity, convention_id)
+
+            if entity:
+                convention = to_domain(entity)
+                results.append((convention, similarity))
+
+        return results
