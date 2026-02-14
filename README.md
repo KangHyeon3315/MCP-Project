@@ -1,8 +1,8 @@
-# DCMA (Domain & Convention Management Agent)
+# Tool Service (Domain & Convention Management Agent)
 
 ## 프로젝트 개요
 
-DCMA (Domain & Convention Management Agent)는 소프트웨어 개발의 핵심 자산인 **도메인 지식**과 **프로젝트 컨벤션**을 독립된 모듈로 관리하고, AI Agent가 이를 적재적소에 참조하도록 돕는 시스템입니다.
+Tool Service (Domain & Convention Management Agent)는 소프트웨어 개발의 핵심 자산인 **도메인 지식**과 **프로젝트 컨벤션**을 독립된 모듈로 관리하고, AI Agent가 이를 적재적소에 참조하도록 돕는 시스템입니다.
 
 이 프로젝트는 두 개의 독립적인 Bounded Context(`domain_document`와 `project_convention`)를 가지며, 각각 헥사고날 아키텍처로 구현되었습니다.
 
@@ -29,7 +29,7 @@ DB_USER=your_db_user
 DB_PASSWORD=your_db_password
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=dcma_db
+DB_NAME=tool_service_db
 ```
 `your_db_user`와 `your_db_password`는 실제 PostgreSQL 사용자명과 비밀번호로 변경해야 합니다.
 

@@ -1,5 +1,5 @@
 [project]
-name = "mcp-dcma"
+name = "mcp-tool"
 version = "0.1.0"
 description = ""
 authors = [

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Projects - DCMA{% endblock %}
+{% block title %}Projects - Tool Service{% endblock %}
 
 {% block content %}
     <h1>Projects</h1>
@@ -8,7 +8,7 @@
 
     <div class="list-group mt-4">
         {% for project in projects %}
-            <a href="/ui/projects/{{ project }}" class="list-group-item list-group-item-action">
+            <a href="/mcp/projects/{{ project }}" class="list-group-item list-group-item-action">
                 {{ project }}
             </a>
         {% else %}

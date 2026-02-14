@@ -40,7 +40,7 @@ class Container(containers.DeclarativeContainer):
     db_password = os.environ.get("DB_PASSWORD", "password")
     db_host = os.environ.get("DB_HOST", "localhost")
     db_port = os.environ.get("DB_PORT", "5432")
-    db_name = os.environ.get("DB_NAME", "dcma_db")
+    db_name = os.environ.get("DB_NAME", "postgres")
 
     # --- Database ---
     db_engine = providers.Singleton(
@@ -48,7 +48,7 @@ class Container(containers.DeclarativeContainer):
         url=f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
     )
     db_session_factory = providers.Factory(sessionmaker, bind=db_engine, autocommit=False, autoflush=False)
-    
+
     # Use a Resource with a generator for proper session management
     db_session = providers.Resource(
         get_db_session,

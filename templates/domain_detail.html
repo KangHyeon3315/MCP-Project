@@ -5,12 +5,12 @@
 {% block content %}
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/ui">Home</a></li>
-            <li class="breadcrumb-item"><a href="/ui/projects/{{ domain.project }}">{{ domain.project }}</a></li>
+            <li class="breadcrumb-item"><a href="/mcp">Home</a></li>
+            <li class="breadcrumb-item"><a href="/mcp/projects/{{ domain.project }}">{{ domain.project }}</a></li>
             <li class="breadcrumb-item active" aria-current="page">{{ domain.domain }}</li>
         </ol>
     </nav>
-    
+
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1>Domain: <strong>{{ domain.domain }}</strong></h1>
         <form method="get" class="d-flex align-items-center">

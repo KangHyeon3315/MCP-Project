@@ -1,8 +1,8 @@
-# DCMA (Domain & Convention Management Agent) 설정 가이드
+# Tool Service (Domain & Convention Management Agent) 설정 가이드
 
 ## 프로젝트 개요
 
-DCMA는 도메인 문서와 프로젝트 컨벤션을 관리하는 MCP(Model Context Protocol) 서버입니다.
+Tool Service는 도메인 문서와 프로젝트 컨벤션을 관리하는 MCP(Model Context Protocol) 서버입니다.
 FastAPI 기반의 웹 UI와 API를 제공하며, AI 에이전트가 MCP 도구를 통해 도메인 명세와 컨벤션을 조회/관리할 수 있습니다.
 
 ---
@@ -43,11 +43,11 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 
 ### 접속 URL
 
-| URL | 설명 |
-|-----|------|
-| `http://localhost:8000` | 루트 (상태 확인) |
-| `http://localhost:8000/ui/` | 웹 UI |
-| `http://localhost:8000/docs` | Swagger API 문서 |
+| URL                           | 설명 |
+|-------------------------------|------|
+| `http://localhost:8000`       | 루트 (상태 확인) |
+| `http://localhost:8000/mcp/`  | 웹 UI |
+| `http://localhost:8000/docs`  | Swagger API 문서 |
 | `http://localhost:8000/redoc` | ReDoc API 문서 |
 
 ---
@@ -210,12 +210,12 @@ docker compose down
 
 ### 웹 UI
 
-| 경로 | 설명 |
-|------|------|
-| `/ui/` | 프로젝트 목록 |
-| `/ui/projects/{project_name}` | 프로젝트 상세 (도메인 + 컨벤션) |
-| `/ui/domains/{project_name}/{service_name}/{domain_name}` | 도메인 상세 (버전 히스토리) |
-| `/ui/conventions/{project_name}/{category}/{title}` | 컨벤션 상세 (버전 히스토리) |
+| 경로                                                    | 설명 |
+|-------------------------------------------------------|------|
+| `/mcp/`                                               | 프로젝트 목록 |
+| `/mcp/projects/{project_name}`                         | 프로젝트 상세 (도메인 + 컨벤션) |
+| `/mcp/domains/{project_name}/{service_name}/{domain_name}` | 도메인 상세 (버전 히스토리) |
+| `/mcp/conventions/{project_name}/{category}/{title}`     | 컨벤션 상세 (버전 히스토리) |
 
 ---
 
