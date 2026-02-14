@@ -2,7 +2,7 @@
 """
 MCP Server for domain document and project convention management tools.
 
-This server exposes 7 tools for managing domain documents and project conventions:
+This server exposes 8 tools for managing domain documents and project conventions:
 - read_domain_spec: Read domain data structure and policies
 - read_project_conventions: Read project style and architecture rules
 - analyze_impact: Analyze impact of requirement changes
@@ -10,6 +10,7 @@ This server exposes 7 tools for managing domain documents and project convention
 - create_or_update_project_convention: Create/update project convention
 - soft_delete_domain_document: Soft delete domain document
 - soft_delete_project_convention: Soft delete project convention
+- semantic_search: Search documents using natural language queries
 """
 
 import sys
@@ -26,6 +27,7 @@ from src.mcp.handler import (
     create_or_update_project_convention as handler_create_or_update_project_convention,
     soft_delete_domain_document as handler_soft_delete_domain_document,
     soft_delete_project_convention as handler_soft_delete_project_convention,
+    semantic_search as handler_semantic_search,
 )
 
 # Configure logging to stderr (stdout is used for JSON-RPC messages)
@@ -265,6 +267,48 @@ def soft_delete_project_convention(
         return result
     except Exception as e:
         logger.error(f"Error soft-deleting project convention: {str(e)}", exc_info=True)
+        raise
+
+
+# --- Tool 8: Semantic Search ---
+@mcp.tool()
+def semantic_search(
+    query: str,
+    top_k: int = 10,
+    similarity_threshold: float = 0.3
+) -> Dict[str, Any]:
+    """
+    Search for domain documents and project conventions using natural language queries.
+
+    This tool uses semantic search (vector similarity) to find relevant documents
+    based on the meaning of the query, not just keyword matching.
+
+    Args:
+        query: Natural language search query (e.g., "사용자 인증 정책", "변수 명명 규칙")
+        top_k: Maximum number of results to return (default: 10)
+        similarity_threshold: Minimum similarity score (0.0-1.0) to include in results (default: 0.3)
+
+    Returns:
+        Dictionary containing:
+        - query: The original search query
+        - total_count: Number of results found
+        - matches: List of matching documents, each with:
+            - document_type: "DOMAIN_DOCUMENT" or "PROJECT_CONVENTION"
+            - document_id: Unique identifier
+            - similarity: Similarity score (0.0-1.0, higher is better)
+            - content: Full document content
+
+    Examples:
+        >>> semantic_search("사용자 인증 관련 정책")
+        >>> semantic_search("naming conventions", top_k=5, similarity_threshold=0.5)
+    """
+    logger.info(f"Semantic search: '{query}' (top_k={top_k}, threshold={similarity_threshold})")
+    try:
+        result = handler_semantic_search(query, top_k, similarity_threshold)
+        logger.info(f"Found {result['total_count']} results for query: '{query}'")
+        return result
+    except Exception as e:
+        logger.error(f"Error performing semantic search: {str(e)}", exc_info=True)
         raise
 
 

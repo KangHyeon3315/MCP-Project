@@ -157,11 +157,60 @@ def soft_delete_project_convention(project_name: str, category: str, title: str)
     """
     container = Container()
     convention_service = container.convention_service()
-    
+
     affected_rows = convention_service.soft_delete_convention_by_logical_key(
         project=project_name,
         category=category,
         title=title
     )
     return f"{affected_rows} records soft-deleted for convention '{title}'."
+
+
+# --- Semantic Search Tool ---
+def semantic_search(query: str, top_k: int = 10, similarity_threshold: float = 0.3) -> Dict[str, Any]:
+    """
+    Tool 8: Semantic search for domain documents and project conventions.
+    Searches using natural language queries and returns relevant documents ranked by similarity.
+
+    Input: {
+        "query": "사용자 인증 정책",
+        "top_k": 10,  # Optional, default 10
+        "similarity_threshold": 0.3  # Optional, default 0.3
+    }
+    Output (JSON): {
+        "query": "사용자 인증 정책",
+        "total_count": 5,
+        "matches": [
+            {
+                "document_type": "DOMAIN_DOCUMENT" | "PROJECT_CONVENTION",
+                "document_id": "uuid",
+                "similarity": 0.85,
+                "content": {...}  # Full document content
+            },
+            ...
+        ]
+    }
+    """
+    container = Container()
+    search_service = container.semantic_search_service()
+
+    result = search_service.search(
+        query=query,
+        top_k=top_k,
+        similarity_threshold=similarity_threshold
+    )
+
+    return {
+        "query": result.query,
+        "total_count": result.total_count,
+        "matches": [
+            {
+                "document_type": match.document_type,
+                "document_id": match.document_id,
+                "similarity": match.similarity,
+                "content": match.content
+            }
+            for match in result.matches
+        ]
+    }
 

@@ -10,6 +10,10 @@ from src.domain_document.adapter.output.persistence.repository import DocumentRe
 from src.project_convention.application.service.convention_service import ConventionService
 from src.project_convention.adapter.output.persistence.repository import ConventionRepository
 
+from src.semantic_search.adapter.output.embedding.sentence_transformer_adapter import SentenceTransformerAdapter
+from src.semantic_search.application.service.embedding_service import EmbeddingService
+from src.semantic_search.application.service.semantic_search_service import SemanticSearchService
+
 load_dotenv() # Explicitly load .env variables at the top
 
 def get_db_session(session_factory: sessionmaker):
@@ -55,6 +59,40 @@ class Container(containers.DeclarativeContainer):
         session_factory=db_session_factory
     )
 
+    # --- Semantic Search Module ---
+    # Embedding Adapter (Singleton - 모델을 한 번만 로드)
+    embedding_adapter = providers.Singleton(
+        SentenceTransformerAdapter
+    )
+
+    # Embedding Service
+    embedding_service = providers.Factory(
+        EmbeddingService,
+        embedding_adapter=embedding_adapter,
+        domain_repository=providers.Factory(
+            DocumentRepository,
+            session=db_session,
+        ),
+        convention_repository=providers.Factory(
+            ConventionRepository,
+            session=db_session,
+        )
+    )
+
+    # Semantic Search Service
+    semantic_search_service = providers.Factory(
+        SemanticSearchService,
+        embedding_adapter=embedding_adapter,
+        domain_repository=providers.Factory(
+            DocumentRepository,
+            session=db_session,
+        ),
+        convention_repository=providers.Factory(
+            ConventionRepository,
+            session=db_session,
+        )
+    )
+
     # --- Domain Document Module ---
     document_repository = providers.Factory(
         DocumentRepository,
@@ -63,6 +101,7 @@ class Container(containers.DeclarativeContainer):
     document_service = providers.Factory(
         DocumentService,
         document_repository=document_repository,
+        embedding_service=embedding_service,
     )
 
     # --- Project Convention Module ---
@@ -73,4 +112,5 @@ class Container(containers.DeclarativeContainer):
     convention_service = providers.Factory(
         ConventionService,
         convention_repository=convention_repository,
+        embedding_service=embedding_service,
     )
