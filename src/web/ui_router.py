@@ -10,7 +10,7 @@ from src.domain_document.application.port.input.document_use_case import Documen
 
 # Configure templates
 templates = Jinja2Templates(directory="templates")
-router = APIRouter()
+router = APIRouter(prefix="/mcp")
 
 @router.get("/", response_class=HTMLResponse)
 @inject
