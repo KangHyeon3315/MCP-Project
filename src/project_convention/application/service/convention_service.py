@@ -1,10 +1,13 @@
 from typing import Optional, List
 import uuid
 from datetime import datetime, timezone
+import logging
 
 from src.project_convention.domain.model.convention import ProjectConvention
 from src.project_convention.application.port.output.convention_repository_port import ConventionRepositoryPort
 from src.project_convention.application.port.input.convention_use_case import ConventionUseCase
+
+logger = logging.getLogger(__name__)
 
 
 class ConventionService(ConventionUseCase):
@@ -13,8 +16,9 @@ class ConventionService(ConventionUseCase):
     This service contains the core business logic for managing project conventions.
     """
 
-    def __init__(self, convention_repository: ConventionRepositoryPort):
+    def __init__(self, convention_repository: ConventionRepositoryPort, embedding_service=None):
         self._repository = convention_repository
+        self._embedding_service = embedding_service
 
     def create_or_update_convention(self, project: str, category: str, title: str, content: str, example_correct: Optional[str], example_incorrect: Optional[str]) -> ProjectConvention:
         """
@@ -42,7 +46,18 @@ class ConventionService(ConventionUseCase):
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc)
         )
-        return self._repository.save(new_convention)
+
+        saved_convention = self._repository.save(new_convention)
+
+        # 임베딩 자동 생성
+        if self._embedding_service:
+            try:
+                self._embedding_service.create_embedding_for_convention(saved_convention)
+            except Exception as e:
+                logger.error(f"Failed to create embedding for convention {saved_convention.identifier}: {e}")
+                # 임베딩 실패해도 컨벤션 저장은 성공으로 처리
+
+        return saved_convention
 
     def get_latest_conventions_for_project(self, project: str) -> List[ProjectConvention]:
         """

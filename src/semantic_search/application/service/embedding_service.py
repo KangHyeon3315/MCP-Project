@@ -2,8 +2,8 @@ from typing import List
 import logging
 
 from ...application.port.output.embedding_port import EmbeddingPort
-from ....domain_document.domain.model.domain_document import DomainDocument
-from ....project_convention.domain.model.project_convention import ProjectConvention
+from ....domain_document.domain.model.document import DomainDocument
+from ....project_convention.domain.model.convention import ProjectConvention
 
 logger = logging.getLogger(__name__)
 

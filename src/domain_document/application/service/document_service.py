@@ -1,10 +1,13 @@
 from typing import Optional, List
 import uuid
 from datetime import datetime, timezone
+import logging
 
 from src.domain_document.domain.model.document import DomainDocument, DomainProperty, DomainPolicy
 from src.domain_document.application.port.output.document_repository_port import DocumentRepositoryPort
 from src.domain_document.application.port.input.document_use_case import DocumentUseCase
+
+logger = logging.getLogger(__name__)
 
 
 class DocumentService(DocumentUseCase):
@@ -13,8 +16,9 @@ class DocumentService(DocumentUseCase):
     This service contains the core business logic for managing domain documents.
     """
 
-    def __init__(self, document_repository: DocumentRepositoryPort):
+    def __init__(self, document_repository: DocumentRepositoryPort, embedding_service=None):
         self._repository = document_repository
+        self._embedding_service = embedding_service
 
     def create_or_update_document(self, project: str, service: str, domain: str, summary: str, properties: list, policies: list) -> DomainDocument:
         """
@@ -43,8 +47,18 @@ class DocumentService(DocumentUseCase):
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc)
         )
-        
-        return self._repository.save(new_document)
+
+        saved_document = self._repository.save(new_document)
+
+        # 임베딩 자동 생성
+        if self._embedding_service:
+            try:
+                self._embedding_service.create_embedding_for_document(saved_document)
+            except Exception as e:
+                logger.error(f"Failed to create embedding for document {saved_document.identifier}: {e}")
+                # 임베딩 실패해도 문서 저장은 성공으로 처리
+
+        return saved_document
 
     def get_document_by_full_name(self, project: str, service: str, domain: str, version: int) -> Optional[DomainDocument]:
         """
