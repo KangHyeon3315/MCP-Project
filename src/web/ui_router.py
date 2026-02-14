@@ -10,7 +10,7 @@ from src.domain_document.application.port.input.document_use_case import Documen
 
 # Configure templates
 templates = Jinja2Templates(directory="templates")
-router = APIRouter(prefix="/ui") # Add a prefix for all UI routes
+router = APIRouter()
 
 @router.get("/", response_class=HTMLResponse)
 @inject
@@ -24,10 +24,10 @@ def get_project_list_page(
     """
     doc_projects = document_service.get_all_unique_project_names()
     conv_projects = convention_service.get_all_unique_project_names()
-    
+
     # Combine and get unique project names
     project_names = sorted(list(set(doc_projects + conv_projects)))
-    
+
     return templates.TemplateResponse(
         "project_list.html",
         {"request": request, "projects": project_names}
@@ -53,11 +53,11 @@ def get_project_detail_page(
     # Get available filter options
     available_services = sorted(list(set([d.service for d in all_domains])))
     available_categories = sorted(list(set([c.category for c in all_conventions])))
-    
+
     # Apply filters if they are provided
     filtered_domains = [d for d in all_domains if not service_filter or d.service == service_filter]
     filtered_conventions = [c for c in all_conventions if not category_filter or c.category == category_filter]
-    
+
     return templates.TemplateResponse(
         "project_detail.html",
         {
