@@ -6,6 +6,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
+from pgvector.sqlalchemy import Vector
 
 Base = declarative_base()
 
@@ -23,6 +24,7 @@ class DomainDocumentEntity(Base):
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
     updated_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
     deleted_at = Column(TIMESTAMP(timezone=True), nullable=True) # For soft-delete
+    embedding = Column(Vector(384), nullable=True) # Vector embedding for semantic search
 
 
     properties = relationship("DomainPropertyEntity", back_populates="domain_document", cascade="all, delete-orphan")

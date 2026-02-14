@@ -3,6 +3,7 @@ from sqlalchemy import Column, String, TIMESTAMP, TEXT, Integer, UniqueConstrain
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
+from pgvector.sqlalchemy import Vector
 
 Base = declarative_base()
 
@@ -21,5 +22,6 @@ class ProjectConventionEntity(Base):
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
     updated_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
     deleted_at = Column(TIMESTAMP(timezone=True), nullable=True) # For soft-delete
-    
+    embedding = Column(Vector(384), nullable=True) # Vector embedding for semantic search
+
     __table_args__ = (UniqueConstraint('project', 'category', 'title', 'version', name='uq_project_convention'),)
