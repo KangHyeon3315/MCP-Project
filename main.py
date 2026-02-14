@@ -22,7 +22,11 @@ def create_app() -> FastAPI:
     @app.get("/")
     def read_root():
         return {"message": "DCMA (Domain & Convention Management Agent) API is running. Go to /ui for the web interface."}
-        
+
+    @app.get("/health_check")
+    def health_check():
+        return {"status": "ok"}
+
     return app
 
 app = create_app()
