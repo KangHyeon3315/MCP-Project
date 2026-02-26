@@ -16,7 +16,14 @@ This server exposes 8 tools for managing domain documents and project convention
 import sys
 import logging
 from typing import List, Dict, Any, Optional
+from pathlib import Path
 from mcp.server.fastmcp import FastMCP
+from dotenv import load_dotenv
+
+# Load environment variables from .env file using absolute path
+BASE_DIR = Path(__file__).resolve().parent
+ENV_PATH = BASE_DIR / '.env'
+load_dotenv(dotenv_path=ENV_PATH)
 
 # Import handler functions from the existing handler module
 from src.mcp.handler import (
@@ -53,7 +60,7 @@ def read_domain_spec(
     Read the data structure and policies for a specific domain.
 
     Args:
-        project_name: The name of the project (e.g., "Ttutta")
+        project_name: The name of the project (e.g., "my-project")
         service_name: The name of the service (e.g., "Auth")
         domain_name: The name of the domain (e.g., "User")
         version: Optional specific version number. If not provided, returns the latest version.
@@ -82,7 +89,7 @@ def read_project_conventions(
     Read project style and architecture rules.
 
     Args:
-        project_name: The name of the project (e.g., "Ttutta")
+        project_name: The name of the project (e.g., "my-project")
         category: Optional category filter (e.g., "NAMING", "ARCHITECTURE", "TESTING")
 
     Returns:
@@ -110,7 +117,7 @@ def analyze_impact(
     Analyze the impact of a requirement change by identifying which domains depend on the specified domain.
 
     Args:
-        project_name: The name of the project (e.g., "Ttutta")
+        project_name: The name of the project (e.g., "my-project")
         service_name: The name of the service (e.g., "Auth")
         domain_name: The name of the domain to analyze (e.g., "User")
 
@@ -142,7 +149,7 @@ def create_or_update_domain_document(
     Create a new domain document or update an existing one (creates a new version).
 
     Args:
-        project_name: The name of the project (e.g., "Ttutta")
+        project_name: The name of the project (e.g., "my-project")
         service_name: The name of the service (e.g., "Auth")
         domain_name: The name of the domain (e.g., "User")
         summary: A brief description of the domain's purpose
@@ -186,7 +193,7 @@ def create_or_update_project_convention(
     Create a new project convention or update an existing one (creates a new version).
 
     Args:
-        project_name: The name of the project (e.g., "Ttutta")
+        project_name: The name of the project (e.g., "my-project")
         category: Convention category (e.g., "NAMING", "ARCHITECTURE", "TESTING")
         title: Convention title (e.g., "변수 명명 규칙")
         content: Detailed convention content/rules
@@ -222,7 +229,7 @@ def soft_delete_domain_document(
     allowing for potential recovery.
 
     Args:
-        project_name: The name of the project (e.g., "Ttutta")
+        project_name: The name of the project (e.g., "my-project")
         service_name: The name of the service (e.g., "Auth")
         domain_name: The name of the domain to delete (e.g., "User")
 
@@ -253,7 +260,7 @@ def soft_delete_project_convention(
     allowing for potential recovery.
 
     Args:
-        project_name: The name of the project (e.g., "Ttutta")
+        project_name: The name of the project (e.g., "my-project")
         category: Convention category (e.g., "NAMING", "ARCHITECTURE")
         title: Convention title to delete (e.g., "변수 명명 규칙")
 

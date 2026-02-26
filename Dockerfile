@@ -1,27 +1,18 @@
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 WORKDIR /app
 
-# Install system dependencies for psycopg2-binary
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends libpq-dev && \
-    rm -rf /var/lib/apt/lists/*
+# Install poetry
+RUN pip install poetry==2.1.3
 
-# Install Poetry
-RUN pip install --no-cache-dir poetry
-
-# Copy dependency files first for layer caching
+# Copy project files
 COPY pyproject.toml poetry.lock* ./
+COPY src ./src
+COPY mcp_server.py .
 
-# Install dependencies (no dev, no virtualenv inside container)
-RUN poetry config virtualenvs.create false && \
-    poetry install --no-interaction --no-ansi --only main --no-root
+# Install dependencies
+RUN poetry config virtualenvs.create false \
+    && poetry install --no-interaction --no-ansi --only main
 
-# Copy application code
-COPY main.py ./
-COPY src/ ./src/
-COPY templates/ ./templates/
-
-ENV UVICORN_PORT=8000
-
-CMD uvicorn main:app --host 0.0.0.0 --port $UVICORN_PORT
+# Run the MCP server
+CMD ["python", "mcp_server.py"]

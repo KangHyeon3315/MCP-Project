@@ -82,7 +82,7 @@ docker compose down
 
 ```json
 {
-  "project_name": "Ttutta",
+  "project_name": "my-project",
   "service_name": "Auth",
   "domain_name": "User",
   "version": 1
@@ -98,7 +98,7 @@ docker compose down
 
 ```json
 {
-  "project_name": "Ttutta",
+  "project_name": "my-project",
   "category": "NAMING"
 }
 ```
@@ -112,7 +112,7 @@ docker compose down
 
 ```json
 {
-  "project_name": "Ttutta",
+  "project_name": "my-project",
   "service_name": "Auth",
   "domain_name": "User"
 }
@@ -128,7 +128,7 @@ docker compose down
 
 ```json
 {
-  "project_name": "Ttutta",
+  "project_name": "my-project",
   "service_name": "Auth",
   "domain_name": "User",
   "summary": "사용자 계정 및 인증 정보를 관리하는 핵심 도메인",
@@ -159,7 +159,7 @@ docker compose down
 
 ```json
 {
-  "project_name": "Ttutta",
+  "project_name": "my-project",
   "category": "NAMING",
   "title": "변수 명명 규칙",
   "content": "CamelCase를 사용한다.",
@@ -179,7 +179,7 @@ docker compose down
 
 ```json
 {
-  "project_name": "Ttutta",
+  "project_name": "my-project",
   "service_name": "Auth",
   "domain_name": "User"
 }
@@ -191,7 +191,7 @@ docker compose down
 
 ```json
 {
-  "project_name": "Ttutta",
+  "project_name": "my-project",
   "category": "NAMING",
   "title": "변수 명명 규칙"
 }

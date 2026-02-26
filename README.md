@@ -56,7 +56,7 @@ poetry run uvicorn main:app --reload
 ### 웹 API 엔드포인트
 
 *   **API 문서:** `http://localhost:8000/docs`
-*   **프로젝트 컨벤션 조회 (예시):** `http://localhost:8000/conventions/Ttutta`
+*   **프로젝트 컨벤션 조회 (예시):** `http://localhost:8000/conventions/my-project`
 
 ### AI Agent 시뮬레이션 (MCP Tool 핸들러)
 

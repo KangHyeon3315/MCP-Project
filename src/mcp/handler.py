@@ -10,7 +10,7 @@ def read_domain_spec(project_name: str, service_name: str, domain_name: str, ver
     """
     Tool 1: Reads the data structure and policies for a specific domain.
     (Corresponds to `read_domain_spec` in the plan)
-    Input: {"project_name": "Ttutta", "service_name": "Auth", "domain_name": "User", "version": 1 (Optional)}
+    Input: {"project_name": "my-project", "service_name": "Auth", "domain_name": "User", "version": 1 (Optional)}
     Output (JSON): DomainDocument model (including properties, policies, dependencies).
     """
     container = Container()
@@ -41,7 +41,7 @@ def read_project_conventions(project_name: str, category: Optional[str] = None) 
     """
     Tool 2: Reads project style and architecture rules.
     (Corresponds to `read_project_conventions` in the plan)
-    Input: {"project_name": "Ttutta", "category": "NAMING" (Optional)}
+    Input: {"project_name": "my-project", "category": "NAMING" (Optional)}
     Output (JSON): List of ProjectConvention models.
     """
     container = Container()
@@ -62,7 +62,7 @@ def analyze_impact(project_name: str, service_name: str, domain_name: str) -> st
     """
     Tool 3: Analyzes the impact of a requirement change.
     (Corresponds to `analyze_impact` in the plan)
-    Input: {"project_name": "Ttutta", "service_name": "Auth", "domain_name": "User"}
+    Input: {"project_name": "my-project", "service_name": "Auth", "domain_name": "User"}
     Output (Text): "User 도메인은 Order, AuthLog 도메인에 의해 참조되고 있습니다."
     """
     # This is a placeholder implementation.
@@ -73,7 +73,7 @@ def analyze_impact(project_name: str, service_name: str, domain_name: str) -> st
     # A proper implementation would need a service method for this.
     
     # Let's pretend we found some dependencies for the 'User' domain
-    if domain_name == "User" and project_name == "Ttutta" and service_name == "Auth":
+    if domain_name == "User" and project_name == "my-project" and service_name == "Auth":
         return f"{domain_name} 도메인은 Order, AuthLog 도메인에 의해 참조되고 있습니다."
     
     return f"{domain_name} 도메인을 참조하는 다른 도메인을 찾을 수 없습니다."
@@ -83,7 +83,7 @@ def create_or_update_domain_document(project_name: str, service_name: str, domai
     """
     Tool 4: Creates a new domain document or a new version of an existing one.
     Input: {
-        "project_name": "Ttutta",
+        "project_name": "my-project",
         "service_name": "Auth",
         "domain_name": "User",
         "summary": "사용자 계정 및 인증 정보를 관리하는 핵심 도메인",
@@ -109,7 +109,7 @@ def create_or_update_project_convention(project_name: str, category: str, title:
     """
     Tool 5: Creates a new project convention or a new version of an existing one.
     Input: {
-        "project_name": "Ttutta",
+        "project_name": "my-project",
         "category": "NAMING",
         "title": "변수 명명 규칙",
         "content": "CamelCase를 사용한다.",
@@ -136,7 +136,7 @@ def create_or_update_project_convention(project_name: str, category: str, title:
 def soft_delete_domain_document(project_name: str, service_name: str, domain_name: str) -> str:
     """
     Tool 6: Soft-deletes all versions of a domain document.
-    Input: {"project_name": "Ttutta", "service_name": "Auth", "domain_name": "User"}
+    Input: {"project_name": "my-project", "service_name": "Auth", "domain_name": "User"}
     Output (Text): "N records soft-deleted for domain 'User'."
     """
     container = Container()
@@ -152,7 +152,7 @@ def soft_delete_domain_document(project_name: str, service_name: str, domain_nam
 def soft_delete_project_convention(project_name: str, category: str, title: str) -> str:
     """
     Tool 7: Soft-deletes all versions of a project convention.
-    Input: {"project_name": "Ttutta", "category": "NAMING", "title": "변수 명명 규칙"}
+    Input: {"project_name": "my-project", "category": "NAMING", "title": "변수 명명 규칙"}
     Output (Text): "N records soft-deleted for convention '변수 명명 규칙'."
     """
     container = Container()
